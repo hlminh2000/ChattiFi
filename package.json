@@ -1,0 +1,26 @@
+{
+  "name": "chattifi",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "dotenvx run -- npx tsx ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@dotenvx/dotenvx": "^1.0.0",
+    "@langchain/community": "^0.2.14",
+    "@langchain/groq": "^0.0.13",
+    "@langchain/openai": "^0.2.0",
+    "@supabase/supabase-js": "^2.44.0",
+    "@types/inquirer": "^9.0.7",
+    "@types/lodash": "^4.17.6",
+    "inquirer": "^9.2.23",
+    "langchain": "^0.2.7",
+    "lodash": "^4.17.21",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.15.7",
+    "zod": "^3.23.8"
+  }
+}
