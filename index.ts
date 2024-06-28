@@ -77,7 +77,10 @@ import inquirer from "inquirer"
         separators: ['\n\n', "\n", ' ', ''],
         chunkOverlap: 50,
       }).createDocuments([rawTranscript as string])
-      await vectorStore.addDocuments(documents.map(doc => ({ ...doc, pageContent: `The following was found in ${ticker}'s conference call: \n...${doc.pageContent}` })))
+      await vectorStore.addDocuments(documents.map(doc => ({
+        ...doc, 
+        pageContent: `The following was found in ${ticker}'s conference call: \n...${doc.pageContent}` 
+      })))
       const similarDocs = await vectorStore.similaritySearch(originalPrompt, 10)
       const { content } = await PromptTemplate
         .fromTemplate(`Summarize the following text in 200 words. \n The text: {snippets}`)
