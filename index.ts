@@ -79,7 +79,7 @@ import inquirer from "inquirer"
       const documents = await new RecursiveCharacterTextSplitter({
         chunkSize: 500,
         separators: ['\n\n', "\n", ' ', ''],
-        chunkOverlap: 200,
+        chunkOverlap: 100,
       }).createDocuments([rawTranscript as string])
       const embeddingModel = new HuggingFaceTransformersEmbeddings({
         // model: "Xenova/all-MiniLM-L6-v2",
