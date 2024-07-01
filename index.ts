@@ -61,43 +61,49 @@ import inquirer from "inquirer"
   const earningsCallKnowledgeRetriever = new DynamicStructuredTool({
     name: "earnings_call_knowledge_retriever",
     description: `
-      Retrieves relevant information about the company's earnings, business and operations in a given quarter from the company's earnings call for the period.
-      Information may include sales of particular products, segments, company initiatives, market conditions, etc...
+      Retrieves relevant information about the companies' earnings, business and operations in a given quarter from the companies' earnings call for the period.
+      Information may include sales of particular products, segments, companies' initiatives, market conditions, etc...
       Information that is not available in financial statements can often be found here, so this can also be used if no other information is available or could not be retrieved.
     `,
     schema: z.object({
       question: z.string().describe("The question you're trying to answer."),
-      ticker: z.string().describe("The company ticker to retrieve earnings call transcript for."),
+      tickers: z.array(z.string()).describe("The company tickers to retrieve earnings call transcript for."),
       year: z.number().optional(),
       quarter: z.number().optional(),
     }),
     callbacks: [new ConsoleCallbackHandler()],
     func: async (inputs) => {
-      const { question, ticker, year, quarter } = inputs
-      const rawTranscript = await getMockTranscript({ ticker, year, quarter })
-      if (!rawTranscript) return `Could not retrieve any transcript for ${ticker}`
-      const documents = await new RecursiveCharacterTextSplitter({
-        chunkSize: 500,
-        separators: ['\n\n', "\n", ' ', ''],
-        chunkOverlap: 100,
-      }).createDocuments([rawTranscript as string])
-      const embeddingModel = new HuggingFaceTransformersEmbeddings({
-        // model: "Xenova/all-MiniLM-L6-v2",
-        model: "Xenova/bge-large-en-v1.5",
-      })
-      // const embeddingModel = new TensorFlowEmbeddings();
-      const vectorStore = new MemoryVectorStore(embeddingModel)
-      await vectorStore.addDocuments(documents)
-      // const retriever = MultiQueryRetriever.fromLLM({
-      //   llm,
-      //   retriever: vectorStore.asRetriever(),
-      //   verbose: true,
-      // });
-      const retriever = vectorStore.asRetriever()
-      const similarDocs = await retriever.invoke(question)
-      const summarizer = loadSummarizationChain(llm, { type: "map_reduce" })
-      const response = await summarizer.invoke({input_documents: similarDocs})
-      return response.text as string
+      const { question, tickers, year, quarter } = inputs
+      const results = await Promise.all(tickers.map(async ticker => {
+        const rawTranscript = await getMockTranscript({ ticker, year, quarter })
+        if (!rawTranscript) return `Could not retrieve any transcript for ${ticker}`
+        const documents = await new RecursiveCharacterTextSplitter({
+          chunkSize: 500,
+          separators: ['\n\n', "\n", ' ', ''],
+          chunkOverlap: 100,
+        }).createDocuments([rawTranscript as string])
+        const embeddingModel = new HuggingFaceTransformersEmbeddings({
+          // model: "Xenova/all-MiniLM-L6-v2",
+          model: "Xenova/bge-large-en-v1.5",
+        })
+        // const embeddingModel = new TensorFlowEmbeddings();
+        const vectorStore = new MemoryVectorStore(embeddingModel)
+        await vectorStore.addDocuments(documents)
+        // const retriever = MultiQueryRetriever.fromLLM({
+        //   llm,
+        //   retriever: vectorStore.asRetriever(),
+        //   verbose: true,
+        // });
+        const retriever = vectorStore.asRetriever()
+        const similarDocs = await retriever.invoke(question)
+        const summarizer = loadSummarizationChain(llm, { type: "map_reduce" })
+        const response = await summarizer.invoke({input_documents: similarDocs})
+        return {
+          ticker,
+          content: response.text as string
+        }
+      }))
+      return JSON.stringify(results);
     }
   })
 
@@ -158,6 +164,7 @@ import inquirer from "inquirer"
       ["system", `
         It is ${new Date()} right now.
         You are a helpful assistant who assists users with answering questions about company stock financial performance and their business.
+        You are analytical and methodical, and always think through problems one step at a time.
         If asked to perform any financial analysis, show the math. If you asked a tool, don't mention that you did so.
         If you could not retrieve any data from your tool, apologize and say nothing else.
         If you do not know the answer, or cannot find the relevant information, simply say so. DO NOT MAKE UP ANSWERS!
