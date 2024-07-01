@@ -13,6 +13,8 @@ import * as dotenv from "@dotenvx/dotenvx"
 import _ from 'lodash'
 import z from 'zod'
 import inquirer from "inquirer"
+import { MultiQueryRetriever } from "langchain/retrievers/multi_query"
+import { loadSummarizationChain } from "langchain/chains"
 
 
 (async () => {
@@ -61,15 +63,14 @@ import inquirer from "inquirer"
       Information that is not available in financial statements can often be found here, so this can also be used if no other information is available or could not be retrieved.
     `,
     schema: z.object({
-      originalPrompt: z.string().describe("The question from the user which you are trying to answer."),
+      question: z.string().describe("The question you're trying to answer."),
       ticker: z.string().describe("The company ticker to retrieve earnings call transcript for."),
       year: z.number().optional(),
       quarter: z.number().optional(),
     }),
     callbacks: [new ConsoleCallbackHandler()],
     func: async (inputs) => {
-      const { originalPrompt, ticker, year, quarter } = inputs
-      const vectorStore = new MemoryVectorStore(new OpenAIEmbeddings())
+      const { question, ticker, year, quarter } = inputs
       const rawTranscript = await getMockTranscript({ ticker, year, quarter })
       if (!rawTranscript) return `Could not retrieve any transcript for ${ticker}`
       const documents = await new RecursiveCharacterTextSplitter({
@@ -77,16 +78,20 @@ import inquirer from "inquirer"
         separators: ['\n\n', "\n", ' ', ''],
         chunkOverlap: 50,
       }).createDocuments([rawTranscript as string])
-      await vectorStore.addDocuments(documents.map(doc => ({
-        ...doc, 
-        pageContent: `The following was found in ${ticker}'s conference call: \n...${doc.pageContent}` 
-      })))
-      const similarDocs = await vectorStore.similaritySearch(originalPrompt, 10)
-      const { content } = await PromptTemplate
-        .fromTemplate(`Summarize the following text in 200 words. \n The text: {snippets}`)
-        .pipe(llm)
-        .invoke({ snippets: similarDocs.map(d => d.pageContent).join("\n") })
-      return content as string
+      const vectorStore = new MemoryVectorStore(new OpenAIEmbeddings())
+      await vectorStore.addDocuments(documents)
+      // const retriever = MultiQueryRetriever.fromLLM({
+      //   llm,
+      //   retriever: vectorStore.asRetriever(),
+      //   verbose: true,
+      // });
+      const retriever = vectorStore.asRetriever()
+      const similarDocs = await retriever.invoke(question)
+      console.log("similarDocs: ", similarDocs)
+      const summarizer = loadSummarizationChain(llm, { type: "map_reduce" })
+      const response = await summarizer.invoke({input_documents: similarDocs})
+      console.log("response: ", response)
+      return response.text as string
     }
   })
 
