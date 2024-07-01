@@ -1,20 +1,23 @@
+import "@tensorflow/tfjs-node"
+import { TensorFlowEmbeddings } from "@langchain/community/embeddings/tensorflow";
 import { DynamicStructuredTool } from "@langchain/core/tools"
 import { createToolCallingAgent, AgentExecutor } from "langchain/agents"
 import { ChatPromptTemplate } from "@langchain/core/prompts"
 import { ChatGroq } from "@langchain/groq"
 import { BufferMemory, CombinedMemory } from "langchain/memory"
-import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai"
+import { ChatOpenAI } from "@langchain/openai"
 import { MemoryVectorStore } from "langchain/vectorstores/memory"
 import { ConsoleCallbackHandler } from "@langchain/core/tracers/console"
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 import { PromptTemplate } from '@langchain/core/prompts'
+import { MultiQueryRetriever } from "langchain/retrievers/multi_query"
+import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers"
+import { loadSummarizationChain } from "langchain/chains"
 
 import * as dotenv from "@dotenvx/dotenvx"
 import _ from 'lodash'
 import z from 'zod'
 import inquirer from "inquirer"
-import { MultiQueryRetriever } from "langchain/retrievers/multi_query"
-import { loadSummarizationChain } from "langchain/chains"
 
 
 (async () => {
@@ -76,9 +79,14 @@ import { loadSummarizationChain } from "langchain/chains"
       const documents = await new RecursiveCharacterTextSplitter({
         chunkSize: 500,
         separators: ['\n\n', "\n", ' ', ''],
-        chunkOverlap: 50,
+        chunkOverlap: 200,
       }).createDocuments([rawTranscript as string])
-      const vectorStore = new MemoryVectorStore(new OpenAIEmbeddings())
+      const embeddingModel = new HuggingFaceTransformersEmbeddings({
+        // model: "Xenova/all-MiniLM-L6-v2",
+        model: "Xenova/bge-large-en-v1.5",
+      })
+      // const embeddingModel = new TensorFlowEmbeddings();
+      const vectorStore = new MemoryVectorStore(embeddingModel)
       await vectorStore.addDocuments(documents)
       // const retriever = MultiQueryRetriever.fromLLM({
       //   llm,
