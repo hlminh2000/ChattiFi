@@ -87,10 +87,8 @@ import { loadSummarizationChain } from "langchain/chains"
       // });
       const retriever = vectorStore.asRetriever()
       const similarDocs = await retriever.invoke(question)
-      console.log("similarDocs: ", similarDocs)
       const summarizer = loadSummarizationChain(llm, { type: "map_reduce" })
       const response = await summarizer.invoke({input_documents: similarDocs})
-      console.log("response: ", response)
       return response.text as string
     }
   })
