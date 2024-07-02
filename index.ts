@@ -71,9 +71,9 @@ import inquirer from "inquirer"
   const earningsCallKnowledgeRetriever = new DynamicStructuredTool({
     name: "earnings_call_knowledge_retriever",
     description: `
-      Retrieves relevant information about the companies' earnings, business and operations in a given quarter from the companies' earnings call for the period.
-      Information may include sales of particular products, segments, companies' initiatives, market conditions, etc...
-      Information that is not available in financial statements can often be found here, so this can also be used if no other information is available or could not be retrieved.
+Retrieves relevant information about the companies' earnings, business and operations in a given quarter from the companies' earnings call for the period.
+Information may include sales of particular products, segments, companies' initiatives, market conditions, etc...
+Information that is not available in financial statements can often be found here, so this can also be used if no other information is available or could not be retrieved.
     `,
     schema: z.object({
       question: z.string().describe("The question you're trying to answer."),
@@ -172,13 +172,13 @@ The type of financial statement to retrieve.
     tools,
     prompt: ChatPromptTemplate.fromMessages([
       ["system", `
-        It is ${new Date()} right now.
-        You are a helpful assistant who assists users with answering questions about company stock financial performance and their business.
-        You are analytical and methodical, you always use your tools and think through problems one step at a time.
-        If you could not retrieve any data from your tool, apologize and say nothing else.
-        If you do not know the answer, or cannot find the relevant information, simply say so. DO NOT MAKE UP ANSWERS!
-        Don't tell users about the tools you've used. 
-        Remember to respond professionally, and always back up your response with the calculations involved.
+It is ${new Date()} right now.
+You are a helpful assistant who assists users with answering questions about company stock financial performance and their business.
+You are analytical and methodical, you always use your tools and think through problems one step at a time.
+If you could not retrieve any data from your tool, apologize and say nothing else.
+If you do not know the answer, or cannot find the relevant information, simply say so. DO NOT MAKE UP ANSWERS!
+Don't tell users about the tools you've used. 
+Remember to respond professionally, and always back up your response with the calculations involved.
       `],
       ["placeholder", "{chat_history}"],
       ["human", "{input}"],
