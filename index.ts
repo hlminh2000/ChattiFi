@@ -124,10 +124,10 @@ import inquirer from "inquirer"
       statementType: z
         .enum(["balance-sheet-statement", "income-statement", "cash-flow-statement"])
         .describe(`
-          The type of financial statement to retrieve.
-          - income-statement: Income statments show the company's revenues and expenses during a particular period. It indicates how the revenues are transformed into the net income or net profit.
-          - balance-sheet-statement: A balance sheet is a summary of the financial balances of the company, including assets, liabilities and shareholders' equity.
-          - cash-flow-statement: A cash flow statement summarizes the amount of cash and cash equivalents entering and leaving a company, including cashflow from operations, financing and investing activities.
+The type of financial statement to retrieve.
+- income-statement: Income statments show the company's revenues and expenses during a particular period. It indicates how the revenues are transformed into the net income or net profit.
+- balance-sheet-statement: A balance sheet is a summary of the financial balances of the company, including assets, liabilities and shareholders' equity.
+- cash-flow-statement: A cash flow statement summarizes the amount of cash and cash equivalents entering and leaving a company, including cashflow from operations, financing and investing activities.
         `),
       ticker: z.string().describe("The stock ticker to perform the operation on."),
       period: z.enum(["annual", "quarter"]).describe("The period of the statements.").optional(),
