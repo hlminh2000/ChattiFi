@@ -1,5 +1,4 @@
-import "@tensorflow/tfjs-node"
-import { TensorFlowEmbeddings } from "@langchain/community/embeddings/tensorflow";
+import { ChatAnthropic } from "@langchain/anthropic";
 import { DynamicStructuredTool } from "@langchain/core/tools"
 import { createToolCallingAgent, AgentExecutor } from "langchain/agents"
 import { ChatPromptTemplate } from "@langchain/core/prompts"
@@ -25,9 +24,10 @@ import inquirer from "inquirer"
   dotenv.config()
   const openAIApiKey = process.env.OPENAI_API_KEY
   const groqApiKey = process.env.GROQ_API_KEY
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY
   const fmpApiKey = process.env.FMP_API_KEY
-  if (!(openAIApiKey || groqApiKey)) 
-    throw "Either OPENAI_API_KEY or GROQ_API_KEY must be provided"
+  if (!(openAIApiKey || groqApiKey || anthropicApiKey)) 
+    throw "Either OPENAI_API_KEY or GROQ_API_KEY ANTHROPIC_API_KEY must be provided"
   if (!fmpApiKey) 
     throw "FMP_API_KEY must be provided"
 
@@ -37,6 +37,14 @@ import inquirer from "inquirer"
       model: "gpt-4", 
       temperature: 0,
       // callbacks: [new ConsoleCallbackHandler()],
+    }) 
+    : anthropicApiKey 
+    ? new ChatAnthropic({
+      temperature: 0,
+      model: "claude-3-5-sonnet-20240620",
+      // In Node.js defaults to process.env.ANTHROPIC_API_KEY,
+      // apiKey: "YOUR-API-KEY",
+      maxTokens: 1024,
     }) 
     : new ChatGroq({
       apiKey: groqApiKey,
@@ -166,11 +174,11 @@ import inquirer from "inquirer"
       ["system", `
         It is ${new Date()} right now.
         You are a helpful assistant who assists users with answering questions about company stock financial performance and their business.
-        You are analytical and methodical, you always think through problems one step at a time.
-        If asked to perform any financial analysis, show the math.
+        You are analytical and methodical, you always use your tools and think through problems one step at a time.
         If you could not retrieve any data from your tool, apologize and say nothing else.
         If you do not know the answer, or cannot find the relevant information, simply say so. DO NOT MAKE UP ANSWERS!
-        Don't tell users about the tools you've used. Remember to respond professionally.
+        Don't tell users about the tools you've used. 
+        Remember to respond professionally, and always back up your response with the calculations involved.
       `],
       ["placeholder", "{chat_history}"],
       ["human", "{input}"],
@@ -199,6 +207,7 @@ import inquirer from "inquirer"
       console.log("[RESPONSE]:", res.output)
       console.log("==========================")
     } catch (err) {
+      console.log(err)
       console.log("==========================")
       console.log("[RESPONSE]:", "Ooops, the power of your request is over 9000, I cannot handle it! Can you help guide me through the process step by step?")
       console.log("==========================")
