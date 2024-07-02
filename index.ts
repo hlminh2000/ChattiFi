@@ -35,12 +35,14 @@ import inquirer from "inquirer"
     ? new ChatOpenAI({ 
       openAIApiKey, 
       model: "gpt-4", 
-      temperature: 0 
+      temperature: 0,
+      // callbacks: [new ConsoleCallbackHandler()],
     }) 
     : new ChatGroq({
       apiKey: groqApiKey,
       temperature: 0,
       model: "llama3-70b-8192",
+      // callbacks: [new ConsoleCallbackHandler()],
     })
 
   /**
@@ -164,11 +166,11 @@ import inquirer from "inquirer"
       ["system", `
         It is ${new Date()} right now.
         You are a helpful assistant who assists users with answering questions about company stock financial performance and their business.
-        You are analytical and methodical, and always think through problems one step at a time.
-        If asked to perform any financial analysis, show the math. If you asked a tool, don't mention that you did so.
+        You are analytical and methodical, you always think through problems one step at a time.
+        If asked to perform any financial analysis, show the math.
         If you could not retrieve any data from your tool, apologize and say nothing else.
         If you do not know the answer, or cannot find the relevant information, simply say so. DO NOT MAKE UP ANSWERS!
-        Remember to respond professionally.
+        Don't tell users about the tools you've used. Remember to respond professionally.
       `],
       ["placeholder", "{chat_history}"],
       ["human", "{input}"],
@@ -186,6 +188,7 @@ import inquirer from "inquirer"
     agent,
     tools,
     memory: new CombinedMemory({ memories: [chatHistory] }),
+    // callbacks: [new ConsoleCallbackHandler()],
   })
 
   while (true) {
